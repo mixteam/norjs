@@ -1,0 +1,7 @@
+{
+    “name” : “norjs”,
+    “description” : “import js normally(use script tag)”,
+    “author” : “zhuxun”,
+    “version” : “0.1”,
+    “main” : “./normal.js”
+}
