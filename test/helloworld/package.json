@@ -1,0 +1,11 @@
+{
+    "name" : "helloworld",
+    "description" : "test normal js",
+    "author" : "zhuxun",
+    "version" : "0.5",
+    "namespace" : "mix/norjs/test",
+    "main" : "./helloworld.js",
+    "dependencies" : {
+    	"mix/norjs/test/debug" : "0.5"
+    }
+}

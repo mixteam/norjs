@@ -1,0 +1,8 @@
+{
+    "name" : "debug",
+    "description" : "test normal js",
+    "author" : "zhuxun",
+    "version" : "0.5",
+    "namespace" : "mix/norjs/test",
+    "main" : "./debug.js"
+}
