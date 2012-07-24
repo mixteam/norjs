@@ -15,6 +15,22 @@
         [dependencies]
       )
     );
+
+###使用如下：
+
+最先引入normal.js，之后依次根据依赖关系引入需要的库和入口js。
+
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <script src="../build/normal-v0.5.js"></script>
+	    <script src="./debug/build/debug.js"></script>
+	    <script src="./helloworld/build/helloworld.js"></script>
+    </head>
+    <body>	
+	    <script src="./build/test.js"></script>
+    </body>
+    </html>
     
 ###用命令行build：
 
