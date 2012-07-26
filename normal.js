@@ -1,49 +1,70 @@
 /**
 * @fileOverview import js normally!
 * @author zhuxun
-* @version 0.1
+* @version 0.2
 */
 
-/**@type {Function} norjs function in global scope*/
+/**@type {Function} norjs/define function in global scope*/
 var norjs;
 
-(function(w, undefined) {
+(function(win, undefined) {
 		/**@type {string} namespace seperater*/
 	var NS_SEP = '/',
 		/**@type {string} id seperater*/
 		ID_SEP = '@',
 		/**@type {RegExp} split for namespace and id*/
+		/**@deprecated*/
 		SEP_REGEXP = new RegExp('[' + NS_SEP + ID_SEP + ']'),
+		/**@deprecated*/
+		FULL_REGEXP = new RegExp('([\\w\\d-_/]+)\\/([\\w\\d-_]+)\\@([\\d.]+)'),
 		_scope = {}
 		;
 
-	function defineNS(ns, name, value) {
-		return ns[name] || (ns[name] = value || {});
+	function defineNS(ns, name) {
+		return ns[name] || (ns[name] = {});
 	}
 
+	/**
+	 * @deprecated  use full id to cache
+	 */
 	function findNS(ns, path, ifdefine) {
-		if (typeof path == 'string') path = path.split(SEP_REGEXP);
+		var matches = FULL_REGEXP.exec(path),
+			namespace = matches[1],
+			name = matches[2],
+			version = matches[3]
+			;
 
-		path.forEach(function(name) {
-			if (!ns[name] && ifdefine === false) {
-				throw new Error(path.join('/') + ' has not defined');
-			} else {
-				ns = defineNS(ns, name);
-			}
-		});
+		// namespace level
+		if (!(ns = defineNS(ns, namespace, ifdefine))) { 
+			throw new Error('namespace "' + namespace + '" has not defined');
+		}
+		// module level
+		if (!(ns = defineNS(ns, name, ifdefine))) { 
+			throw new Error('module "' + name + '" in "' + namespace + '" has not defined');
+		}
+		// version for module
+		if (!(ns = defineNS(ns, version, ifdefine))) { 
+			throw new Error('version "' + version + '" for "' + module + '" had not existed');
+		}
+
+		if (!(ns = defineNS(ns, path, ifdefine))) {
+			throw new Error(id + ' has not defined');
+		}
 
 		return ns;
 	}
 
-	function required(dependencies) {
-		var depslist = {};
+	function required(deps) {
+		var _cache = {};
 
-		if (dependencies && dependencies.length) {
-			dependencies.forEach(function(id) {
-				var module = findNS(_scope, id, false)
+		if (deps && deps.length) {
+			deps.forEach(function(id) {
+				var module = _scope[id]
 					;
 				if (module) {
-					depslist[module.id] = module.exports;
+					_cache[module.id] = module.exports;
+				} else {
+					throw new Error(id + ' has not defined');
 				}
 			});
 		}
@@ -53,9 +74,9 @@ var norjs;
 
 			if (id.indexOf(ID_SEP) < 0) id += ID_SEP;
 
-			for (var _id in depslist) {
+			for (var _id in _cache) {
 				if (_id.lastIndexOf(id) >=0) {
-					exports = depslist[_id];
+					exports = _cache[_id];
 					break;
 				}
 			};
@@ -63,7 +84,7 @@ var norjs;
 			if (exports) {
 				return exports;
 			} else {
-				throw new Error('no dependence for ' + id);
+				throw new Error('no declared dependence for ' + id);
 			}
 		}
 	}
@@ -72,19 +93,21 @@ var norjs;
 	 * return [require, exports, module]
 	 * @param {string} id
 	 * @param {Array=} dependencies
+	 * @param {Function=} factory
 	 * @return {Array}
 	 */
-	norjs = function (id, dependencies) {
+	norjs = function (id, dependencies, factory) {
 		var require,
 			module,
-			exports
+			exports,
+			returned
 			;
 
 		// resolve dependencies
 		require = required(dependencies);
 
 		// find module scope
-		module = findNS(_scope, id);
+		module = defineNS(_scope, id);
 
 		// check if defined
 		if (module.exports) {
@@ -94,6 +117,14 @@ var norjs;
 			exports = module.exports = {};
 		}
 
-		return [require, exports, module];
+		if (factory) {	// 兼容CMD，使用define(id, dependencies, factory)
+			returned = factory(require, exports, module);
+			if (returned != undefined) module.exports = returned;
+		} else {
+			return [require, exports, module];
+		}
 	}
+
+	// 兼容CMD
+	if (win['define'] == undefined) win['define'] = norjs;
 })(window);

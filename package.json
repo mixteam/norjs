@@ -2,7 +2,8 @@
     "name" : "norjs",
     "description" : "import js normally(use script tag)",
     "author" : "zhuxun",
-    "version" : "0.1",
+    "version" : "0.2",
     "namespace" : "mix/norjs",
-    "main" : "./normal.js"
+    "main" : "./normal.js",
+    "stable-release" : ["0.1"]
 }
