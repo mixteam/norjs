@@ -10,6 +10,6 @@
 }).apply(
 window,
 norjs(
-'{{{id}}}',
-['{{{dependencies}}}']
+'{{{id}}}'
+[{{#dependencies}}'{{{dependencies}}}'{{/dependencies}}]
 ));

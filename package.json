@@ -3,7 +3,7 @@
     "description" : "import js normally(use script tag)",
     "author" : "zhuxun",
     "version" : "0.2",
-    "namespace" : "mix/norjs",
-    "main" : "./normal.js",
+    "namespace" : "mix/core",
+    "main" : "./src/normal.js",
     "stable-release" : ["0.1"]
 }

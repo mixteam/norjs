@@ -3,10 +3,10 @@
     "description" : "test normal js",
     "author" : "zhuxun",
     "version" : "0.5",
-    "namespace" : "mix/norjs/test",
+    "namespace" : "mix/core/norjs",
     "main" : "./test.js",
     "dependencies" : {
-    	"mix/norjs/test/debug" : "0.5",
-    	"mix/norjs/test/helloworld" : "0.5",
+    	"mix/core/norjs/test/debug" : "0.5",
+    	"mix/core/norjs/test/helloworld" : "0.5",
     }
 }

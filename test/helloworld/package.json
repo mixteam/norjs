@@ -3,9 +3,9 @@
     "description" : "test normal js",
     "author" : "zhuxun",
     "version" : "0.5",
-    "namespace" : "mix/norjs/test",
+    "namespace" : "mix/core/norjs/test",
     "main" : "./helloworld.js",
     "dependencies" : {
-    	"mix/norjs/test/debug" : "0.5"
+    	"mix/core/norjs/test/debug" : "0.5"
     }
 }
