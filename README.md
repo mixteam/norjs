@@ -45,7 +45,7 @@
     
 ###用命令行build：
 
-norjs filename [options]
+norjs module_dir [options]
 
     >node ./bin/norjs ./test/test.js
     >build success to "build/test.js"
@@ -56,4 +56,5 @@ options如下：
     -p 或 --package-file  模块描述文件，默认为package.json
     --version-postfix     是否携带版本信息，默认为false
     --build-postfix       是否携带build器的信息，默认为false
-    --cmd-mode            使用CMD封装
+    --cmd-mode            使用CMD封装，默认为false
+    -v 或 --version       显示版本

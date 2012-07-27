@@ -22,8 +22,8 @@ var NS_SEP = '/',
 
 	args = process.argv.slice(2),
 
-	filename,
-	dirname
+	dirname,
+	filename
 	;
 
 while (args.length > 0) {
@@ -46,14 +46,17 @@ while (args.length > 0) {
 		case '--cmd-mode':
 			options.cmd_mode = true;
 			break;
+		case '-v':
+		case '--version':
+			sys.print('version ' + options.version);
+			process.exit(0);
 		default:
-			filename = v;
+			dirname = v;
 			break;
 	}
 }
 
-var dirname = path.dirname(filename),
-	// parse package.json
+var // parse package.json
 	pkgfile = path.join(dirname, options.package_file),
 	pkg = global.eval('(' + fs.readFileSync(pkgfile).toString() + ')'),
 
@@ -62,6 +65,7 @@ var dirname = path.dirname(filename),
 	packtmpl = fs.readFileSync(packfile).toString(),
 
 	// infos in package.json
+	filename = path.join(dirname, pkg.main),
 	deps = pkg.dependencies,
 	id = pkg.namespace + NS_SEP + pkg.name + ID_SEP + pkg.version,
 	deplist = []
@@ -95,7 +99,7 @@ function build(text, packtmpl) {
 				' * @fileOverview ' + pkg.name,
 				' * @author ' + pkg.author,
 				' * @version ' + pkg.version,
-				deplist.length ? ' * @requires ' + deplist.join(', ') : ' *',
+				deplist.length ? ' * @requires ' + deplist.join(', ') : undefined,
 				' */'
 			].join('\n');
 			code = text;
