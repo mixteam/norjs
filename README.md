@@ -47,7 +47,7 @@
 
 norjs module_dir [options]
 
-    >node ./bin/norjs ./test/test.js
+    >node ./bin/norjs ./
     >build success to "build/test.js"
 
 options如下：
