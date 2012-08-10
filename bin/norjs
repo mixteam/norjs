@@ -3,136 +3,166 @@
 
 global.sys = require(/^v0\.[012]/.test(process.version) ? "sys" : "util");
 
-var NORMAL_PACK = ''
-
 var NS_SEP = '/',
 	ID_SEP = '@',
 	fs = require("fs"), 
 	path = require("path"),
 	mu = require("./mustache"),
 
-	options = {
-		version : '0.2',
-		build_path : './build',
-		package_file : './package.json',
-		version_postfix : false,
-		build_postfix : false,
-		cmd_mode : false
-	},
-
-	args = process.argv.slice(2),
-
-	dirname,
-	filename
+	VERSION = 0.3
 	;
 
-while (args.length > 0) {
-	var v = args.shift();
-	switch(v) {
-		case '-b':
-		case '--build-path':
-			options.build_path = args.shift();
-			break;
-		case '-p':
-		case '--package-file':
-			options.package_file =  args.shift();
-			break;
-		case '--version-postfix':
-			options.version_postfix = true;
-			break;
-		case '--build-postfix':
-			options.build_postfix = true;
-			break;
-		case '--cmd-mode':
-			options.cmd_mode = true;
-			break;
-		case '-v':
-		case '--version':
-			sys.print('version ' + options.version);
-			process.exit(0);
-		default:
-			dirname = v;
-			break;
-	}
-}
 
-var // parse package.json
-	pkgfile = path.join(dirname, options.package_file),
-	pkg = global.eval('(' + fs.readFileSync(pkgfile).toString() + ')'),
+function norjs(dirname, options) {
 
-	// load xxx.pack template
-	packfile = path.join(__dirname, options.cmd_mode ? 'cmd.pack' : 'normal.pack'),
-	packtmpl = fs.readFileSync(packfile).toString(),
+	var // package.json
+		pkgFile, pkgObj,
 
-	// infos in package.json
-	filename = path.join(dirname, pkg.main),
-	deps = pkg.dependencies,
-	id = pkg.namespace + NS_SEP + pkg.name + ID_SEP + pkg.version,
-	deplist = []
-	;
+		// template for pack
+		packFile, packTmpl,
 
-	if (deps) {
-		for (var name in deps) {
-			deplist.push(name + ID_SEP + deps[name]);
-		}
-	}
+		// main file to build
+		mainFile, mainJS,
 
-	fs.readFile(filename, 'utf8', function(err, text) {
-		if (err) throw err;
-		text = build(text, packtmpl);
-		output(text);
-	});
-
-function trim(text) {
-	return text.replace(/^\s|\s$/g, '');
-}
-
-function build(text, packtmpl) {
-	var annotate_l = text.indexOf('/**'),
-		annotate_u = text.indexOf('*/'),
-		annotate, code
+		// parse in package.json
+		id,	deps, deplist
 		;
 
-		if (annotate_l != 0) {
-			annotate = [
-				'/**',
-				' * @fileOverview ' + pkg.name,
-				' * @author ' + pkg.author,
-				' * @version ' + pkg.version,
-				deplist.length ? ' * @requires ' + deplist.join(', ') : undefined,
-				' */'
-			].join('\n');
-			code = text;
-		} else {
-			annotate = trim(text.substring(annotate_l, annotate_u + 2));
-			code = trim(text.substr(annotate_u + 2));
-		}
+	function trim(text) {
+		return text.replace(/^\s/g, '').replace(/\s$/g, '');
+	}
 
-	return mu.to_html(packtmpl, {
-		'annotate' : annotate,
-		'code' : code,
-		'id' : id,
-		'dependencies' : deplist.join('\', \'')
-	});
+	function build(mainJS, packTmpl, pkgObj, deplist) {
+		var annotate_l = mainJS.indexOf('/**'),
+			annotate_u = mainJS.indexOf('*/'),
+			annotate, code
+			;
+
+			if (annotate_l != 0) {
+				annotate = [
+					'/**',
+					' * @fileOverview ' + pkgObj.name,
+					' * @author ' + pkgObj.author,
+					' * @version ' + pkgObj.version,
+					deplist.length ? ' * @requires ' + deplist.join(', ') : undefined,
+					' */'
+				].join('\n');
+				code = mainJS;
+			} else {
+				annotate = trim(mainJS.substring(annotate_l, annotate_u + 2));
+				code = trim(mainJS.substring(annotate_u + 2));
+			}
+
+		return mu.to_html(packTmpl, {
+			'annotate' : annotate,
+			'code' : code,
+			'id' : id,
+			'dependencies' : deplist.join("', '")
+		});
+	}
+
+	function output(buildedJS, mainFile, pkgObj) {
+	    var buildfile = path.join(
+				dirname, 
+				options.build_path, 
+				path.basename(mainFile, '.js') + 
+				(options.version_postfix ? ('-v' + pkgObj.version) : '') + 
+				(options.build_postfix ? ( options.cmd_mode ? '-cmd' : '-normal') : '') + 
+				'.js'
+			),
+
+		    out = fs.createWriteStream(buildfile, {
+		            flags: "w",
+		            encoding: "utf8",
+		            mode: 0644
+		    })
+		    ;
+
+	    out.write(buildedJS);
+	    out.end();
+	    sys.print(new Date().toTimeString().match(/\d{1,2}\:\d{1,2}\:\d{1,2}/g)[0] + 
+	    			' - [build] success to "' + 
+	    			buildfile + '"\n');
+	}
+
+	// parse package.json
+	pkgFile = path.join(dirname, options.package_file);
+	pkgObj = global.eval('(' + fs.readFileSync(pkgFile).toString() + ')');
+
+	// load xxx.pack template
+	packFile = path.join(__dirname, options.cmd_mode ? 'cmd.pack' : 'normal.pack');
+	packTmpl = fs.readFileSync(packFile).toString();
+
+	// load main file
+	mainFile = path.join(dirname, pkgObj.main);
+	mainJS = fs.readFileSync(mainFile, 'utf8');
+
+	// infos in package.json
+	id = pkgObj.namespace + NS_SEP + pkgObj.name + ID_SEP + pkgObj.version;
+	deps = pkgObj.dependencies || {};
+	deplist = [];
+
+	for (var name in deps) {
+		deplist.push(name + ID_SEP + deps[name]);
+	}
+
+	var buildedJS = build(mainJS, packTmpl, pkgObj, deplist);
+	output(buildedJS, mainFile, pkgObj);
 }
 
-function output(text) {
-    var buildfile = path.join(
-			dirname, 
-			options.build_path, 
-			path.basename(filename, '.js') + 
-			(options.version_postfix ? ('-v' + pkg.version) : '') + 
-			(options.build_postfix ? ( options.cmd_mode ? '-cmd' : '-normal') : '') + 
-			'.js'
-		),
+function parseArgv(argv) {
+	var options = {
+			build_path : './build',
+			package_file : './package.json',
+			version_postfix : false,
+			build_postfix : false,
+			cmd_mode : false
+		},
 
-	    out = fs.createWriteStream(buildfile, {
-	            flags: "w",
-	            encoding: "utf8",
-	            mode: 0644
-	    })
-	    ;
+		dirname = undefined
+		;
 
-    out.write(text);
-    sys.print('build success to "' + buildfile + '"');
+	while (argv.length > 0) {
+		var v = argv.shift();
+
+		switch(v) {
+			case '-b':
+			case '--build-path':
+				options.build_path = argv.shift();
+				break;
+			case '-p':
+			case '--package-file':
+				options.package_file =  argv.shift();
+				break;
+			case '--version-postfix':
+				options.version_postfix = true;
+				break;
+			case '--build-postfix':
+				options.build_postfix = true;
+				break;
+			case '--cmd-mode':
+				options.cmd_mode = true;
+				break;
+			case '-v':
+			case '--version':
+				sys.print('version ' + VERSION);
+				process.exit(0);
+			default:
+				dirname = v;
+				break;
+		}
+	}
+
+	return [dirname, options];
+}
+
+if (require.main === module) {
+	var args = parseArgv(process.argv.slice(2));
+
+	norjs(args[0], args[1]);
+} else {
+	module.exports = {
+		main : norjs,
+		parse : parseArgv
+	}
 }
