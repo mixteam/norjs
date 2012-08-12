@@ -5,7 +5,7 @@ global.sys = require(/^v0\.[012]/.test(process.version) ? "sys" : "util");
 
 var fs = require("fs"), 
 	path = require("path"),
-	norjs = require('./norjs'),
+	norjs = require('./norjs-build'),
 
 	VERSION = 0.1,
 	INTERVAL = 500
