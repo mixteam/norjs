@@ -75,7 +75,7 @@
 
 norjs module_dir [options]
 
-    >node ./bin/norjs ./test
+    >node ./bin/norjs-build ./test
     >21:57:02 - [build] success to "test\build\test.js"
 
 options如下：
@@ -89,7 +89,7 @@ options如下：
 
 ##norjs-monitor：
 
-实时监控JS文件，在修改的同时对其进行封装
+实时监控JS文件，一旦修改就对其进行封装
 
 ###更新历史
 
