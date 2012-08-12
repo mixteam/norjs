@@ -9,7 +9,7 @@ var NS_SEP = '/',
 	path = require("path"),
 	mu = require("./mustache"),
 
-	VERSION = 0.3
+	VERSION = '0.3.0'
 	;
 
 

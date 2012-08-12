@@ -1,7 +1,7 @@
 /**
 * @fileOverview import js normally!
 * @author zhuxun
-* @version 0.2
+* @version 0.2.0
 */
 
 /**@type {Function} norjs/define function in global scope*/

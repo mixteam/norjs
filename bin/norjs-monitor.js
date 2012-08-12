@@ -7,7 +7,7 @@ var fs = require("fs"),
 	path = require("path"),
 	norjs = require('./norjs-build'),
 
-	VERSION = 0.1,
+	VERSION = '0.1.0',
 	INTERVAL = 500
 	;
 
