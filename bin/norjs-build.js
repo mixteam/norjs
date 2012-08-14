@@ -9,24 +9,16 @@ var NS_SEP = '/',
 	path = require("path"),
 	mu = require("./mustache"),
 
-	VERSION = '0.3.0'
+	VERSION = '0.3.1'
 	;
 
+function build(dirname, options, packTmpl, pkgObj) {
+	var // main file to build
+	mainFile, mainJS,
 
-function norjs(dirname, options) {
-
-	var // package.json
-		pkgFile, pkgObj,
-
-		// template for pack
-		packFile, packTmpl,
-
-		// main file to build
-		mainFile, mainJS,
-
-		// parse in package.json
-		id,	deps, deplist
-		;
+	// parse in package.json
+	id,	deps, deplist
+	;
 
 	function trim(text) {
 		return text.replace(/^\s/g, '').replace(/\s$/g, '');
@@ -84,14 +76,6 @@ function norjs(dirname, options) {
 	    			' - [build] success to "' + 
 	    			buildfile + '"\n');
 	}
-
-	// parse package.json
-	pkgFile = path.join(dirname, options.package_file);
-	pkgObj = global.eval('(' + fs.readFileSync(pkgFile).toString() + ')');
-
-	// load xxx.pack template
-	packFile = path.join(__dirname, options.cmd_mode ? 'cmd.pack' : 'normal.pack');
-	packTmpl = fs.readFileSync(packFile).toString();
 
 	// load main file
 	mainFile = path.join(dirname, pkgObj.main);
@@ -156,13 +140,38 @@ function parseArgv(argv) {
 	return [dirname, options];
 }
 
+function main(dirname, options) {
+
+	var // package.json
+		pkgFile, pkgObj,
+
+		// template for pack
+		packFile, packTmpl
+		;
+
+	// parse package.json
+	pkgFile = path.join(dirname, options.package_file);
+	pkgObj = global.eval('([' + fs.readFileSync(pkgFile).toString() + '])');
+
+	// load xxx.pack template
+	packFile = path.join(__dirname, options.cmd_mode ? 'cmd.pack' : 'normal.pack');
+	packTmpl = fs.readFileSync(packFile).toString();
+
+	pkgObj.forEach(function(obj) {
+		process.nextTick(function() {
+			build(dirname, options, packTmpl, obj);
+		});
+	});
+}
+
 if (require.main === module) {
 	var args = parseArgv(process.argv.slice(2));
 
-	norjs(args[0], args[1]);
+	main(args[0], args[1]);
 } else {
 	module.exports = {
-		main : norjs,
-		parse : parseArgv
+		main : main,
+		parse : parseArgv,
+		build : build,
 	}
 }

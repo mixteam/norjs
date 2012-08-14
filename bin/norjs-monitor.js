@@ -7,38 +7,44 @@ var fs = require("fs"),
 	path = require("path"),
 	norjs = require('./norjs-build'),
 
-	VERSION = '0.1.0',
+	VERSION = '0.1.1',
 	INTERVAL = 500
 	;
 
 function monitor(dirname, options) {
 	var pkgFile = path.join(dirname, options.package_file),
-		pkgObj = global.eval('(' + fs.readFileSync(pkgFile).toString() + ')'),
-
-		mainFile = path.join(dirname, pkgObj.main)
+		pkgObj = global.eval('([' + fs.readFileSync(pkgFile).toString() + '])')
 		;
 
-	process.nextTick(function() {
-		var lastTimestamp = 0;
+	pkgObj.forEach(function(obj) {
+		var packFile = path.join(__dirname, options.cmd_mode ? 'cmd.pack' : 'normal.pack'),
+			packTmpl = fs.readFileSync(packFile).toString(),
 
-		setTimeout(function() {
-			var stat = fs.statSync(mainFile)
-				timestamp = stat.mtime.getTime()
-				;
+			mainFile = path.join(dirname, obj.main)
+			;
 
-			if (timestamp !== lastTimestamp) {
-				lastTimestamp = timestamp;
+		process.nextTick(function() {
+			var lastTimestamp = 0;
 
-				norjs.main(dirname, options);
-			}
-			
-			setTimeout(arguments.callee, INTERVAL);
+			setTimeout(function() {
+				var stat = fs.statSync(mainFile)
+					timestamp = stat.mtime.getTime()
+					;
 
-		}, INTERVAL);
+				if (timestamp !== lastTimestamp) {
+					lastTimestamp = timestamp;
 
-	    sys.print(new Date().toTimeString().match(/\d{1,2}\:\d{1,2}\:\d{1,2}/g)[0] + 
-	    			' - [monitor] success to "' + 
-	    			dirname + '"\n');
+					norjs.build(dirname, options, packTmpl, obj);
+				}
+				
+				setTimeout(arguments.callee, INTERVAL);
+
+			}, INTERVAL);
+
+		    sys.print(new Date().toTimeString().match(/\d{1,2}\:\d{1,2}\:\d{1,2}/g)[0] + 
+		    			' - [monitor] success to "' + 
+		    			dirname + '"\n');
+		});
 	});
 }
 
