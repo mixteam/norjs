@@ -5,47 +5,65 @@ global.sys = require(/^v0\.[012]/.test(process.version) ? "sys" : "util");
 
 var fs = require("fs"), 
 	path = require("path"),
-	norjs = require('./norjs-build'),
+	norjs = require('./build'),
 
-	VERSION = '0.1.1',
+	VERSION = '0.2.0',
 	INTERVAL = 500
 	;
 
 function monitor(dirname, options) {
 	var pkgFile = path.join(dirname, options.package_file),
-		pkgObj = global.eval('([' + fs.readFileSync(pkgFile).toString() + '])')
+		pkgIntervalId,
+		mainIntervalId = []
 		;
 
-	pkgObj.forEach(function(obj) {
-		var packFile = path.join(__dirname, options.cmd_mode ? 'cmd.pack' : 'normal.pack'),
-			packTmpl = fs.readFileSync(packFile).toString(),
+	function monitorFile(file, callback) {
+		var lastTimestamp = 0;
 
-			mainFile = path.join(dirname, obj.main)
-			;
+		return setInterval(function() {
+			var stat = fs.statSync(file),
+				timestamp = stat.mtime.getTime()
+				;
 
-		process.nextTick(function() {
-			var lastTimestamp = 0;
+			if (timestamp !== lastTimestamp) {
+				lastTimestamp = timestamp;
 
-			setTimeout(function() {
-				var stat = fs.statSync(mainFile)
-					timestamp = stat.mtime.getTime()
-					;
+				callback();
+			}
+		}, INTERVAL);
+	}
 
-				if (timestamp !== lastTimestamp) {
-					lastTimestamp = timestamp;
+	function monitorPkgFile() {
+		pkgIntervalId = monitorFile(pkgFile, function() {
+			pkgObj = global.eval('([' + fs.readFileSync(pkgFile).toString() + '])');
 
-					norjs.build(dirname, options, packTmpl, obj);
-				}
-				
-				setTimeout(arguments.callee, INTERVAL);
-
-			}, INTERVAL);
-
-		    sys.print(new Date().toTimeString().match(/\d{1,2}\:\d{1,2}\:\d{1,2}/g)[0] + 
-		    			' - [monitor] success to "' + 
-		    			dirname + '"\n');
+			monitorMainFile(pkgObj);
 		});
-	});
+	}
+
+
+	function monitorMainFile(pkgObj) {
+		mainIntervalId.forEach(function(id) {
+			id && clearInterval(id);
+		});
+
+		pkgObj.forEach(function(obj) {
+			var packFile = path.join(__dirname, options.cmd_mode ? 'cmd.pack' : 'normal.pack'),
+				packTmpl = fs.readFileSync(packFile).toString(),
+
+				mainFile = path.join(dirname, obj.main)
+				;
+
+			mainIntervalId.push(monitorFile(mainFile, function() {
+				norjs.build(dirname, options, packTmpl, obj);
+			}));
+		});
+	}
+
+	monitorPkgFile();
+    sys.print(new Date().toTimeString().match(/\d{1,2}\:\d{1,2}\:\d{1,2}/g)[0] + 
+			' - [monitor] success to "' + 
+			dirname + '"\n');
 }
 
 function recurs(dirname, packfile) {

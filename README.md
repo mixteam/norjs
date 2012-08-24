@@ -53,11 +53,15 @@
     </body>
     </html>
     
-##norjs-build：
+##build：
 
 对符合CommonJS规范的JS文件进行封装
 
 ###更新历史
+
+#### v0.3.1
+
+* 支持package.json里有多个描述块
 
 #### v0.3
 
@@ -75,7 +79,7 @@
 
 norjs module_dir [options]
 
-    >node ./bin/norjs-build ./test
+    >node ./bin/build ./test
     >21:57:02 - [build] success to "test\build\test.js"
 
 options如下：
@@ -87,11 +91,19 @@ options如下：
     --cmd-mode            使用CMD封装，默认为false
     -v 或 --version       显示版本
 
-##norjs-monitor：
+##monitor：
 
 实时监控JS文件，一旦修改就对其进行封装
 
 ###更新历史
+
+#### v0.3.1
+
+* 支持监听package.json的修改
+
+#### v0.2
+
+* 支持package.json里有多个描述块
 
 #### v0.1
 

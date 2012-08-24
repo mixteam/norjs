@@ -5,14 +5,17 @@ global.sys = require(/^v0\.[012]/.test(process.version) ? "sys" : "util");
 
 var NS_SEP = '/',
 	ID_SEP = '@',
+	BUILD_IGNORE_FILE = '.buildignore',
+	VERSION = '0.3.1',
+
 	fs = require("fs"), 
 	path = require("path"),
-	mu = require("./mustache"),
-
-	VERSION = '0.3.1'
+	mu = require("./mustache")
 	;
 
 function build(dirname, options, packTmpl, pkgObj) {
+	if (fs.existsSync(path.join(dirname, BUILD_IGNORE_FILE))) return;
+
 	var // main file to build
 	mainFile, mainJS,
 
@@ -24,7 +27,7 @@ function build(dirname, options, packTmpl, pkgObj) {
 		return text.replace(/^\s/g, '').replace(/\s$/g, '');
 	}
 
-	function build(mainJS, packTmpl, pkgObj, deplist) {
+	function gen(mainJS, packTmpl, pkgObj, deplist) {
 		var annotate_l = mainJS.indexOf('/**'),
 			annotate_u = mainJS.indexOf('*/'),
 			annotate, code
@@ -49,7 +52,7 @@ function build(dirname, options, packTmpl, pkgObj) {
 			'annotate' : annotate,
 			'code' : code,
 			'id' : id,
-			'dependencies' : deplist.join("', '")
+			'dependencies' : deplist.join("',\n'")
 		});
 	}
 
@@ -90,7 +93,7 @@ function build(dirname, options, packTmpl, pkgObj) {
 		deplist.push(name + ID_SEP + deps[name]);
 	}
 
-	var buildedJS = build(mainJS, packTmpl, pkgObj, deplist);
+	var buildedJS = gen(mainJS, packTmpl, pkgObj, deplist);
 	output(buildedJS, mainFile, pkgObj);
 }
 
