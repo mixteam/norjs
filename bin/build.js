@@ -103,7 +103,7 @@ function parseArgv(argv) {
 			package_file : './package.json',
 			version_postfix : false,
 			build_postfix : false,
-			cmd_mode : false
+			cmd_mode : true
 		},
 
 		dirname = undefined

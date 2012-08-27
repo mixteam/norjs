@@ -11,7 +11,7 @@
 window,
 norjs(
 
-'{{{id}}}'
+'{{{id}}}',
 
 [{{#dependencies}}'{{{dependencies}}}'{{/dependencies}}]
 

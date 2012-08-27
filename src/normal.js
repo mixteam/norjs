@@ -1,12 +1,11 @@
 /**
 * @fileOverview import js normally!
 * @author zhuxun
-* @version 0.2.0
+* @version 0.3.0
 */
+var norjs = {};
 
 /**@type {Function} norjs/define function in global scope*/
-var norjs;
-
 (function(win, undefined) {
 		/**@type {string} namespace seperater*/
 	var NS_SEP = '/',
@@ -62,7 +61,7 @@ var norjs;
 				var module = _scope[id]
 					;
 				if (module) {
-					_cache[module.id] = module.exports;
+					_cache[module.id] = module;
 				} else {
 					throw new Error(id + ' has not defined');
 				}
@@ -70,19 +69,20 @@ var norjs;
 		}
 
 		return function(id) {
-			var exports;
+			var module, exports;
 
 			if (id.indexOf(ID_SEP) < 0) id += ID_SEP;
 
 			for (var _id in _cache) {
 				if (_id.lastIndexOf(id) >=0) {
-					exports = _cache[_id];
+					module = _cache[_id];
+					exports = module.exports;
 					break;
 				}
 			};
 			
 			if (exports) {
-				return exports;
+				return (module.executed === false ? exports() : exports);
 			} else {
 				throw new Error('no declared dependence for ' + id);
 			}
@@ -96,7 +96,7 @@ var norjs;
 	 * @param {Function=} factory
 	 * @return {Array}
 	 */
-	norjs = function (id, dependencies, factory) {
+	function define(id, dependencies, factory) {
 		var require,
 			module,
 			exports,
@@ -118,13 +118,44 @@ var norjs;
 		}
 
 		if (factory) {	// 兼容CMD，使用define(id, dependencies, factory)
-			returned = factory(require, exports, module);
-			if (returned != undefined) module.exports = returned;
+			cache = function() {
+				var returned = factory(require, exports, module);
+				module.executed = true;
+				return (module.exports = returned || module.exports);
+			};
+			module.exports = cache;
+			module.executed = false;
 		} else {
 			return [require, exports, module];
 		}
 	}
 
+	function use(dependencies, callback) {
+
+		var args = [];
+		
+		dependencies.forEach(function(id) {
+			var module = _scope[id],
+				exports
+				;
+
+			if (!module) {
+				throw new Error(id + ' has not defined');
+			} else {
+				exports = module.exports;
+			}
+
+			exports = (module.executed === false ? exports() : exports);
+
+			args.push(exports);
+		});
+
+		callback.apply(win, args);
+	}
+
+	norjs.define = define;
+	norjs.use = use;
+
 	// 兼容CMD
-	if (win['define'] == undefined) win['define'] = norjs;
+	if (win['define'] == undefined) win['define'] = define;
 })(window);
