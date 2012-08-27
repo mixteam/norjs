@@ -6,6 +6,10 @@
 
 ####0.2
 
+* 支持norjs.use的方式
+
+####0.2
+
 * 增加对CMD封装的支持
 
 ####0.1
@@ -49,7 +53,19 @@
 	    <script src="./helloworld/build/helloworld.js"></script>
     </head>
     <body>	
-	    <script src="./build/test.js"></script>
+	    <script>
+            norjs.use(
+            [
+                "mix/core/norjs/test/debug@0.5",
+                "mix/core/norjs/test/helloworld@0.5"
+            ],
+            function(Debug, HelloWorld) {
+                var debug = new Debug(),
+                    hw = new HelloWorld();
+
+                 debug.log(hw.say());
+            });
+        </script>
     </body>
     </html>
     
